@@ -110,4 +110,20 @@ impl Keychain {
         );
         Ok(())
     }
+
+    pub async fn get_public_key(&mut self) -> Result<kyber1024::PublicKey, KeychainError> {
+        Ok(self.public_key)
+    }
+
+    pub async fn get_secret_key(&mut self) -> Result<kyber1024::SecretKey, KeychainError> {
+        Ok(self.secret_key)
+    }
+
+    pub async fn get_cipher(&mut self) -> Result<kyber1024::Ciphertext, KeychainError> {
+        Ok(self.ciphertext)
+    }
+
+    pub async fn get_shared_secret(&mut self) -> Result<kyber1024::SharedSecret, KeychainError> {
+        Ok(self.shared_secret)
+    }
 }
