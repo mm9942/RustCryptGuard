@@ -1,8 +1,9 @@
-mod keychain; // Import the keychain module
-mod load_key; // Import the load_key module
+mod keychain;
+mod load_key;
+use pqcrypto_traits::kem::{PublicKey, SecretKey, SharedSecret, Ciphertext};
 
-use keychain::Keychain; // Use the Keychain struct from the keychain module
-use load_key::{Decapsulation, Encapsulation}; // Use the load function from the load_key module
+use keychain::Keychain;
+use load_key::{Decapsulation, Encapsulation};
 use tokio;
 
 #[tokio::main]
@@ -15,12 +16,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let secret_key_path = "keychain/keychain.sec";
     let ciphertext_path = "keychain/keychain.ct";
 
-    let encapsulation = Encapsulation::load(public_key_path).await?;
-    println!("Encapsulated shared secret: {}", encapsulation.shared_secret.as_bytes());
-    println!("Ciphertext: {:?}", encapsulation.ciphertext.as_bytes());
+    let mut encap = Encapsulation::load(public_key_path).await?;
 
-    let decapsulation = Decapsulation::load(secret_key_path, ciphertext_path).await?;
-    println!("Decapsulated shared secret: {}", decapsulation.shared_secret.as_bytes());
+    let mut decap = Decapsulation::new(kc.get_secret_key().await.unwrap(), encap.get_cipher().await.unwrap()).await;
+    
+    assert!(encap.get_shared_secret().await.unwrap() == decap.get_shared_secret().await.unwrap());
+    println!("encap secret: {}\ndecap secret: {}\n", hex::encode(&encap.get_shared_secret().await.unwrap().as_bytes()), hex::encode(&decap.get_shared_secret().await.unwrap().as_bytes()));
 
     Ok(())
 }
