@@ -11,7 +11,7 @@ use std::{
 use tokio;
 
 #[derive(Debug)]
-enum KeychainError {
+pub enum KeychainError {
     IOError(std::io::Error),
     HexError(hex::FromHexError),
     EncapsulationError,
@@ -34,8 +34,8 @@ impl fmt::Display for KeychainError {
 impl Error for KeychainError {}
 
 pub struct File {
-    path: String,
-    data: Vec<u8>,
+    pub path: String,
+    pub data: Vec<u8>,
 }
 
 pub enum FileType {
@@ -45,54 +45,95 @@ pub enum FileType {
     Ciphertext,
 }
 
+//#[derive(Debug)]
 pub struct Encapsulation {
-    public_key: kyber1024::PublicKey,
-    shared_secret: kyber1024::SharedSecret,
-    ciphertext: kyber1024::Ciphertext,
+    pub public_key: kyber1024::PublicKey,
+    pub shared_secret: kyber1024::SharedSecret,
+    pub ciphertext: kyber1024::Ciphertext,
 }
 
+//#[derive(Debug)]
 pub struct Decapsulation {
-    secret_key: kyber1024::SecretKey,
-    ciphertext: kyber1024::Ciphertext,
-    shared_secret: kyber1024::SharedSecret,
+    pub secret_key: kyber1024::SecretKey,
+    pub ciphertext: kyber1024::Ciphertext,
+    pub shared_secret: kyber1024::SharedSecret,
 }
 
 impl Encapsulation {
     pub async fn load(path: &str) -> Result<Self, KeychainError> {
-        let public_key_bytes = File::load(path, FileType::PublicKey).await;
+        let public_key_bytes = File::load(path, FileType::PublicKey).await.unwrap();
         let public_key = PublicKey::from_bytes(&public_key_bytes)
             .map_err(|_| KeychainError::EncapsulationError)?;
+        
+        println!("Successfully loaded public key.");
+        
         Ok(Self::new(public_key).await)
     }
 
     pub async fn new(public_key: kyber1024::PublicKey) -> Self {
         let (shared_secret, ciphertext) = encapsulate(&public_key);
+        
+        println!("Encapsulation successful.");
+        
         Self {
             public_key,
             shared_secret,
             ciphertext,
         }
     }
+
+    pub async fn get_public_key(&mut self) -> Result<kyber1024::PublicKey, KeychainError> {
+        Ok(self.public_key)
+    }
+
+
+    pub async fn get_cipher(&mut self) -> Result<kyber1024::Ciphertext, KeychainError> {
+        Ok(self.ciphertext)
+    }
+
+    pub async fn get_shared_secret(&mut self) -> Result<kyber1024::SharedSecret, KeychainError> {
+        Ok(self.shared_secret)
+    }
 }
 
 impl Decapsulation {
     pub async fn load(sec_path: &str, cipher_path: &str) -> Result<Self, KeychainError> {
-        let secret_key_bytes = File::load(sec_path, FileType::SecretKey).await;
+        let secret_key_bytes = File::load(sec_path, FileType::SecretKey).await.unwrap();
         let secret_key = SecretKey::from_bytes(&secret_key_bytes)
             .map_err(|_| KeychainError::DecapsulationError)?;
-        let ciphertext_bytes = File::load(cipher_path, FileType::Ciphertext).await;
+        println!("Successfully loaded secret key.");
+
+        let ciphertext_bytes = File::load(cipher_path, FileType::Ciphertext).await.unwrap();
         let ciphertext = Ciphertext::from_bytes(&ciphertext_bytes)
             .map_err(|_| KeychainError::DecapsulationError)?;
+        println!("Successfully loaded ciphertext.");
+
         Ok(Self::new(secret_key, ciphertext).await)
     }
 
     pub async fn new(secret_key: kyber1024::SecretKey, ciphertext: kyber1024::Ciphertext) -> Self {
         let shared_secret = decapsulate(&ciphertext, &secret_key);
+        
+        println!("Decapsulation successful.");
+        
         Self {
             secret_key,
             ciphertext,
             shared_secret,
         }
+    }
+
+    pub async fn get_secret_key(&mut self) -> Result<kyber1024::SecretKey, KeychainError> {
+        Ok(self.secret_key)
+    }
+
+
+    pub async fn get_cipher(&mut self) -> Result<kyber1024::Ciphertext, KeychainError> {
+        Ok(self.ciphertext)
+    }
+
+    pub async fn get_shared_secret(&mut self) -> Result<kyber1024::SharedSecret, KeychainError> {
+        Ok(self.shared_secret)
     }
 }
 
