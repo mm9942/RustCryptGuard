@@ -1,14 +1,13 @@
 use pqcrypto_kyber::kyber1024::{self, *};
 use pqcrypto_traits::kem::{PublicKey, SecretKey, SharedSecret, Ciphertext};
-use hex::*;
+
 use std::{
     error::Error,
     fmt,
-    fs::{self, *},
-    io,
+    fs::{self},
     result::Result,
 };
-use tokio;
+
 
 #[derive(Debug)]
 pub enum KeychainError {
@@ -82,6 +81,36 @@ impl Encapsulation {
         }
     }
 
+    pub async fn load_public_key(&mut self, path: &str) -> Result<kyber1024::PublicKey, KeychainError> {
+        let public_key_bytes = File::load(path, FileType::PublicKey).await.unwrap();
+        let public_key = PublicKey::from_bytes(&public_key_bytes)
+            .map_err(|_| KeychainError::EncapsulationError)?;
+        
+        println!("Successfully loaded public key.");
+        let _ = self.public_key == public_key;
+        Ok(self.public_key)
+    }
+
+    pub async fn load_cipher(&mut self, path: &str) -> Result<kyber1024::Ciphertext, KeychainError> {let _public_key_bytes = File::load(path, FileType::PublicKey).await.unwrap();
+        let cipher_bytes = File::load(path, FileType::Ciphertext).await.unwrap();
+        let cipher = Ciphertext::from_bytes(&cipher_bytes)
+            .map_err(|_| KeychainError::EncapsulationError)?;
+    
+        println!("Successfully loaded public key.");
+        let _ = self.ciphertext == cipher;
+        Ok(self.ciphertext)
+    }
+
+    pub async fn load_shared_secret(&mut self, path: &str) -> Result<kyber1024::SharedSecret, KeychainError> {
+        let shared_secret_bytes = File::load(path, FileType::SharedSecret).await.unwrap();
+        let shared_secret = SharedSecret::from_bytes(&shared_secret_bytes)
+            .map_err(|_| KeychainError::EncapsulationError)?;
+    
+        println!("Successfully loaded public key.");
+        let _ = self.shared_secret == shared_secret;
+        Ok(self.shared_secret)
+    }
+
     pub async fn get_public_key(&mut self) -> Result<kyber1024::PublicKey, KeychainError> {
         Ok(self.public_key)
     }
@@ -121,6 +150,37 @@ impl Decapsulation {
             ciphertext,
             shared_secret,
         }
+    }
+
+
+    pub async fn load_secret_key(&mut self, path: &str) -> Result<kyber1024::SecretKey, KeychainError> {
+        let secret_key_bytes = File::load(path, FileType::SecretKey).await.unwrap();
+        let secret_key = SecretKey::from_bytes(&secret_key_bytes)
+            .map_err(|_| KeychainError::EncapsulationError)?;
+        
+        println!("Successfully loaded public key.");
+        let _ = self.secret_key == secret_key;
+        Ok(self.secret_key)
+    }
+
+    pub async fn load_cipher(&mut self, path: &str) -> Result<kyber1024::Ciphertext, KeychainError> {let _public_key_bytes = File::load(path, FileType::PublicKey).await.unwrap();
+        let cipher_bytes = File::load(path, FileType::Ciphertext).await.unwrap();
+        let cipher = Ciphertext::from_bytes(&cipher_bytes)
+            .map_err(|_| KeychainError::EncapsulationError)?;
+    
+        println!("Successfully loaded public key.");
+        let _ = self.ciphertext == cipher;
+        Ok(self.ciphertext)
+    }
+
+    pub async fn load_shared_secret(&mut self, path: &str) -> Result<kyber1024::SharedSecret, KeychainError> {
+        let shared_secret_bytes = File::load(path, FileType::SharedSecret).await.unwrap();
+        let shared_secret = SharedSecret::from_bytes(&shared_secret_bytes)
+            .map_err(|_| KeychainError::EncapsulationError)?;
+    
+        println!("Successfully loaded public key.");
+        let _ = self.shared_secret == shared_secret;
+        Ok(self.shared_secret)
     }
 
     pub async fn get_secret_key(&mut self) -> Result<kyber1024::SecretKey, KeychainError> {
