@@ -29,7 +29,7 @@ async fn cli() -> Command {
             Command::new("new")
                 .about("Create new encryption keys")
                 .arg(arg!(-n --name <NAME> "Set the keyname you want to use").required(true))
-                .arg(arg!(-p --path <PATH> "Set set the path to save the keyfiles into.").required(false))
+                .arg(arg!(-p --path <PATH> "Set set the path to save the keyfiles into.").required(false).default_value("."))
         )
         .subcommand(
             Command::new("encrypt")
@@ -136,7 +136,11 @@ async fn check() {
     let _key = String::new();
 
     if let Some(sub_matches) = matches.subcommand_matches("new") {
-
+        let keyname = sub_matches.get_one::<String>("name");
+        let keypath = sub_matches.get_one::<String>("path");
+        let mut keychain = Keychain::new().await.expect("Failed to initialize keychain");
+        let _ = keychain.show().await;
+        let _ = keychain.save(keypath.unwrap().as_str(), keyname.unwrap().as_str()).await;
     }
     if let Some(sub_matches) = matches.subcommand_matches("encrypt") {
         let mut is_message = false;
