@@ -18,51 +18,40 @@ pub use clap::{
 
 async fn cli() -> Command {
     Command::new("pqencrypt")
-        .about("")
-        .long_about(
-            ""
-        )
+        .about("A post-quantum encryption tool")
+        .long_about("A command-line tool for post-quantum encryption using Kyber1024")
         .author("mm29942, mm29942@pm.me")
-        .display_name("PostQuantum Encrpt")
+        .display_name("PostQuantum Encrypt")
         .arg(arg!(-l --list "List all saved keyfiles.").action(ArgAction::SetTrue).required(false))
         .subcommand(
             Command::new("new")
                 .about("Create new encryption keys")
                 .arg(arg!(-n --name <NAME> "Set the keyname you want to use").required(true))
-                .arg(arg!(-p --path <PATH> "Set set the path to save the keyfiles into.").required(false).default_value("."))
+                .arg(arg!(-p --path <PATH> "Set the path to save the keyfiles into.").required(false).default_value("."))
         )
         .subcommand(
             Command::new("encrypt")
                 .about("Encrypt a file, message or DataDrive using the public key")
-
-                .arg(arg!(-k --key <KEY> "Key to verify and authenthificate hmac and encrypt the data").required(true))
-
-                .arg(arg!(-p --public <PUBLIC> "Path to the public key file for encryption").required(false))
-
+                .arg(arg!(-p --passphrase <PASSPHRASE> "Passphrase to derive encryption key").required(true))
+                .arg(arg!(-u --public <PUBLIC> "Path to the public key file for encryption").required(false))
                 .arg(arg!(-s --save "Saves the encrypted output to a file. If not specified, the output will be printed to the console.").action(ArgAction::SetTrue).required(false))
-                .arg(arg!(--shared_secret <SHARED_SECRET> "Path to the shared secret file for encryption").required(false))
-
                 .arg(arg!(-f --file <FILE> "Select the file you want to encrypt.").required(false))
-                .arg(arg!(-m --message <Message> "Define the message you want to encrypt.").required(false))
-                .arg(arg!(-d --drive <DRIVE> "Select the data drive you want encrypt").required(false))
+                .arg(arg!(-m --message <MESSAGE> "Define the message you want to encrypt.").required(false))
+                .arg(arg!(-d --drive <DRIVE> "Select the DataDrive you want to encrypt").required(false))
+                .arg(arg!(--dir <DIR> "Select the directory, where you want to save the encrypted file/ message").required(false))
         )
         .subcommand(
             Command::new("decrypt")
                 .about("Decrypt encrypted files, messages or DataDrive using the secret key and the ciphertext")
-                
-                .arg(arg!(-k --key <KEY> "Key to verify and authenthificate hmac and encrypt the data").required(true))
-
-                .arg(arg!(--hex "Directly encrypt the message from the hex, without needing to extract it from a file!").action(ArgAction::SetTrue).required(false))
-
-                .arg(arg!(-s --secret <SECRET> "Path to the secret key file for encryption").required(true))
-                .arg(arg!(-c --ciphertext <CIPHERTEXT> "Select the ciphertext eich is needed to retrieve the shared secret").required(true))
-                
-                .arg(arg!(-f --file <FILE> "Select the file you want to encrypt.").required(false))
-                .arg(arg!(-m --message <Message> "Define the message you want to encrypt.").required(false))
-                .arg(arg!(-d --drive <DRIVE> "Select the data drive you want encrypt").required(false))
-
+                .arg(arg!(-p --passphrase <PASSPHRASE> "Passphrase to derive decryption key").required(true))
+                .arg(arg!(-s --secret <SECRET> "Path to the secret key file for decryption").required(true))
+                .arg(arg!(-c --ciphertext <CIPHERTEXT> "Select the ciphertext which is needed to retrieve the shared secret").required(true))
+                .arg(arg!(-f --file <FILE> "Select the file you want to decrypt.").required(false))
+                .arg(arg!(-m --message <MESSAGE> "Define the message you want to decrypt.").required(false))
+                .arg(arg!(-d --drive <DRIVE> "Select the DataDrive you want to decrypt").required(false))
         )
 }
+
 
 struct encrypt {
     public_key: String,
@@ -145,7 +134,7 @@ async fn check() {
     if let Some(sub_matches) = matches.subcommand_matches("encrypt") {
         let mut is_message = false;
 
-        let hmac_key = sub_matches.get_one::<String>("key").expect("HMAC key is required");
+        let hmac_key = sub_matches.get_one::<String>("passphrase").expect("HMAC key is required");
         let hmac_key_bytes = hmac_key.as_bytes();
 
         let encrypt_option = if sub_matches.contains_id("file") {
@@ -201,7 +190,7 @@ async fn check() {
 
         let keychain = Keychain::new().await.expect("Failed to initialize keychain");
 
-        let hmac_key = sub_matches.get_one::<String>("key").expect("HMAC key is required");
+        let hmac_key = sub_matches.get_one::<String>("passphrase").expect("HMAC key is required");
         let hmac_key_bytes = hmac_key.as_bytes();
 
         let decrypt_option = if sub_matches.contains_id("file") {
