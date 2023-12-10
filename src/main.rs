@@ -207,23 +207,13 @@ async fn check() {
             return;
         };
 
-        if !sub_matches.get_flag("hex") {            
-            keychain.decrypt_with_secret_key(
-                decrypt_option.0.as_str(),
-                ciphertext_path.as_str(),
-                secret_key_path.as_str(),
-                decrypt_option.1,
-                hmac_key_bytes
-            ).await.expect("Decryption failed");
-        } else {
-            let message = sub_matches.get_one::<String>("message").unwrap().clone();
-            keychain.decrypt_message(
-                &message, 
-                ciphertext_path.as_str(), 
-                secret_key_path.as_str(),
-                hmac_key_bytes
-            ).await.expect("Decryption failed");
-        }
+        let message = sub_matches.get_one::<String>("message").unwrap().clone();
+        keychain.decrypt_message(
+            &message, 
+            ciphertext_path.as_str(), 
+            secret_key_path.as_str(),
+            hmac_key_bytes
+        ).await.expect("Decryption failed");
     }
 
     if matches.get_flag("list") {
