@@ -98,15 +98,17 @@ impl Keychain {
         Ok(())
     }
 
-    pub async fn save(&self, title: &str) -> Result<(), KeychainError> {
-        let public_key_path = format!("{}/{}.pub", title, title);
-        let secret_key_path = format!("{}/{}.sec", title, title);
-        let shared_secret_path = format!("{}/{}.ss", title, title);
-        let ciphertext_path = format!("{}/{}.ct", title, title);
-
-        if !std::path::Path::new(&title).exists() {
-            let _ = std::fs::create_dir(title);
+    pub async fn save(&self, base_path: &str, title: &str) -> Result<(), KeychainError> {
+        let dir_path = format!("{}/{}", base_path, title);
+        let dir = std::path::Path::new(&dir_path);
+        if !dir.exists() {
+            std::fs::create_dir_all(&dir).map_err(KeychainError::WriteError)?;
         }
+
+        let public_key_path = format!("{}/{}.pub", dir_path, title);
+        let secret_key_path = format!("{}/{}.sec", dir_path, title);
+        let shared_secret_path = format!("{}/{}.ss", dir_path, title);
+        let ciphertext_path = format!("{}/{}.ct", dir_path, title);
 
         fs::write(
             &public_key_path, 
