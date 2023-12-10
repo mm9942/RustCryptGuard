@@ -32,8 +32,8 @@ async fn cli() -> Command {
         .subcommand(
             Command::new("encrypt")
                 .about("Encrypt a file, message or DataDrive using the public key")
-                .arg(arg!(-p --passphrase <PASSPHRASE> "Passphrase to derive encryption key").required(true))
-                .arg(arg!(-u --public <PUBLIC> "Path to the public key file for encryption").required(false))
+                .arg(arg!(-k --passphrase <PASSPHRASE> "Passphrase to derive encryption key").required(true))
+                .arg(arg!(-p --public <PUBLIC> "Path to the public key file for encryption").required(false))
                 .arg(arg!(-s --save "Saves the encrypted output to a file. If not specified, the output will be printed to the console.").action(ArgAction::SetTrue).required(false))
                 .arg(arg!(-f --file <FILE> "Select the file you want to encrypt.").required(false))
                 .arg(arg!(-m --message <MESSAGE> "Define the message you want to encrypt.").required(false))
@@ -206,12 +206,12 @@ async fn check() {
             eprintln!("Error: No decryption option specified.");
             return;
         };
-
-        let message = sub_matches.get_one::<String>("message").unwrap().clone();
-        keychain.decrypt_message(
-            &message, 
-            ciphertext_path.as_str(), 
+        
+        keychain.decrypt_with_secret_key(
+            decrypt_option.0.as_str(),
+            ciphertext_path.as_str(),
             secret_key_path.as_str(),
+            decrypt_option.1,
             hmac_key_bytes
         ).await.expect("Decryption failed");
     }
